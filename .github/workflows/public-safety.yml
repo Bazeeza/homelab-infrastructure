@@ -1,0 +1,37 @@
+name: Public safety
+
+# Runs on every change: a real address or secret must never reach main.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Generic rules always run. Real hostnames and domains to hide are kept
+      # in the PUBLIC_SAFETY_PATTERNS repository secret (one regex per line),
+      # so the list itself is never published. GitHub masks secret values in logs.
+      - name: Scan tracked files for real values
+        env:
+          EXTRA_PATTERNS: ${{ secrets.PUBLIC_SAFETY_PATTERNS }}
+        run: bash scripts/check-public-safety.sh
+
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # ShellCheck is preinstalled on GitHub-hosted Ubuntu runners
+      - name: ShellCheck every shell script
+        run: |
+          mapfile -t scripts < <(git ls-files '*.sh')
+          if [ "${#scripts[@]}" -eq 0 ]; then echo "No shell scripts."; exit 0; fi
+          shellcheck --severity=style "${scripts[@]}"

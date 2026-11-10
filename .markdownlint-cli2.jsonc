@@ -1,0 +1,22 @@
+{
+  // Rules that catch real rendering, navigation or readability problems.
+  // Pure style rules (line length, list markers...) stay off: the README
+  // uses HTML for its header and long table rows on purpose.
+  "config": {
+    "default": false,
+    "MD001": true, // heading levels increase one at a time
+    "MD009": true, // no trailing spaces
+    "MD010": true, // no hard tabs
+    "MD011": true, // reversed link syntax (text)[url]
+    "MD012": true, // no multiple consecutive blank lines
+    "MD018": true, // space after the # of a heading
+    "MD019": true, // only one space after the # of a heading
+    "MD023": true, // headings start at the beginning of the line
+    "MD025": true, // a single top-level heading per file
+    "MD039": true, // no spaces inside link text
+    "MD040": true, // code blocks declare a language
+    "MD042": true, // no empty links
+    "MD045": true, // images have alternative text
+    "MD047": true  // files end with a newline
+  }
+}
