@@ -1,0 +1,17 @@
+# Normalize line endings in the repository
+* text=auto
+
+# Shell scripts and systemd units run on Linux: always LF
+*.sh       text eol=lf
+*.service  text eol=lf
+*.timer    text eol=lf
+*.conf     text eol=lf
+
+# PowerShell files keep CRLF, the native format of Windows PowerShell 5.1
+*.ps1  text eol=crlf
+*.psd1 text eol=crlf
+
+# YAML, Markdown and SVG stay LF for GitHub Actions and the linters
+*.yml  text eol=lf
+*.md   text eol=lf
+*.svg  text eol=lf

@@ -1,0 +1,40 @@
+# This repository documents a real infrastructure with placeholder values only.
+# Anything below could carry a real secret or a real address: never commit it.
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+*.secret
+*.token
+secrets/
+
+# Private keys and certificates
+id_rsa*
+id_ecdsa*
+id_ed25519*
+*.pem
+*.key
+*.pfx
+*.p12
+
+# Terraform state and real variable values
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+!*.tfvars.example
+
+# Local notes, exports and backups that may contain real hostnames or addresses
+*.local.md
+*.bak
+*.avant
+exports/
+
+# Editors and operating systems
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+Desktop.ini
+.DS_Store
