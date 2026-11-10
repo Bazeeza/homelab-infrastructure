@@ -59,7 +59,9 @@ homelab-infrastructure/
 │       ├── 0000-template.md
 │       └── 0001 ... 0004
 ├── scripts/
-│   └── check-public-safety.sh   fails on real addresses, keys, tokens
+│   ├── check-public-safety.sh   fails on real addresses, keys, tokens
+│   └── hooks/pre-commit         same check before every local commit
+├── CHANGELOG.md
 ├── LICENSE
 └── README.md
 ```
@@ -80,7 +82,8 @@ The repository is written in stages. Each stage documents what already runs, wit
 
 - This is a **small personal** infrastructure. It is documented to show method, not scale.
 - Only what exists is described. When a rule is decided but not fully applied yet, the ADR says so in its *Status* line and lists the follow-up.
-- Real configuration files are never copied as they are. They are rewritten with placeholders first, then checked by [`scripts/check-public-safety.sh`](scripts/check-public-safety.sh).
+- Real configuration files are never copied as they are. They are rewritten with placeholders first, then checked by [`scripts/check-public-safety.sh`](scripts/check-public-safety.sh) before each commit (pre-commit hook) and on each push (CI).
+- Changes are listed in the [CHANGELOG](CHANGELOG.md).
 
 ## License
 
