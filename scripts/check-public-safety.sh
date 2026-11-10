@@ -8,10 +8,20 @@
 #   EXTRA_PATTERNS_FILE=/path/to/patterns.txt   one extended regex per line
 #   EXTRA_PATTERNS="regex1
 #   regex2"                                     same, from an environment variable
+#
+# Option --staged: scan the content of the index (what the next commit will
+# contain) instead of the working tree. Used by scripts/hooks/pre-commit.
 # Exit code: 0 = nothing found, 1 = at least one finding, 2 = usage error.
 # See docs/anonymization.md.
 
 set -euo pipefail
+
+staged=false
+case "${1:-}" in
+    "") ;;
+    --staged) staged=true ;;
+    *) echo "usage: $0 [--staged]" >&2; exit 2 ;;
+esac
 
 root="$(git rev-parse --show-toplevel 2>/dev/null)" || {
     echo "error: run this script inside the Git repository" >&2
@@ -39,6 +49,14 @@ mapfile -d '' files < <(git ls-files -z)
 if [ "${#files[@]}" -eq 0 ]; then
     echo "No tracked files."
     exit 0
+fi
+
+if [ "$staged" = true ]; then
+    # Copy the staged version of every file to a temporary folder and scan it there
+    index_copy="$(mktemp -d)"
+    trap 'rm -rf "$index_copy"' EXIT
+    git checkout-index --all --prefix="$index_copy/"
+    cd "$index_copy"
 fi
 
 scan() {

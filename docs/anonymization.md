@@ -31,7 +31,8 @@ This repository describes a real, running infrastructure. It is public, so every
 
 1. **Placeholders at writing time.** Configuration files are copied into this repository only after every value is replaced by an environment variable or a placeholder from the table above.
 2. **`.gitignore`.** `.env` files, private keys, Terraform state and local backups are ignored ([`.gitignore`](../.gitignore)).
-3. **Automatic check on every push and pull request.** [`scripts/check-public-safety.sh`](../scripts/check-public-safety.sh) fails the build if it finds an IPv4 address outside the documentation ranges, a mesh VPN address, a private key, a known token format or a sensitive file name. It also accepts extra private patterns (real hostnames, real domains) from a repository secret, so the list of what to hide is never itself published. See [How the safety check works](#how-the-safety-check-works).
+3. **Pre-commit hook on the administrator's clone.** [`scripts/hooks/pre-commit`](../scripts/hooks/pre-commit) runs the same check before every commit. See [Stop a leak before the commit](#stop-a-leak-before-the-commit).
+4. **Automatic check on every push and pull request.** [`scripts/check-public-safety.sh`](../scripts/check-public-safety.sh) fails the build if it finds an IPv4 address outside the documentation ranges, a mesh VPN address, a private key, a known token format or a sensitive file name. It also accepts extra private patterns (real hostnames, real domains) from a repository secret, so the list of what to hide is never itself published. See [How the safety check works](#how-the-safety-check-works).
 
 ## How the safety check works
 
@@ -55,4 +56,19 @@ In GitHub Actions the extra patterns come from the `PUBLIC_SAFETY_PATTERNS` repo
 | Sensitive files | Tracked `.env`, key, certificate, `.tfstate` and `.tfvars` files | `.env.example`, `*.tfvars.example` |
 | Extra patterns | Whatever the secret lists | None |
 
-Reference: [GitHub Docs, Using secrets in GitHub Actions](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions), [RFC 5737](https://www.rfc-editor.org/rfc/rfc5737), [RFC 6598 (shared address space)](https://www.rfc-editor.org/rfc/rfc6598).
+## Stop a leak before the commit
+
+The CI scan runs **after** a push. In a public repository, a pushed branch is already public, even if the pull request is never merged. The CI is the safety net; the pre-commit hook is the real barrier.
+
+```bash
+# Once per clone: use the hooks stored in the repository
+git config core.hooksPath scripts/hooks
+
+# Optional: private patterns for the hook, outside the repository
+mkdir -p ~/.config/homelab-infrastructure
+nano ~/.config/homelab-infrastructure/private-patterns.txt   # one regex per line
+```
+
+The hook runs `scripts/check-public-safety.sh --staged` and refuses the commit if anything is found. `--staged` scans the **index**, the exact content of the next commit: a value fixed in the file but still staged is caught, and a value present only in an unstaged file does not block the commit. Bypassing it with `git commit --no-verify` is possible, which is why the CI scan stays.
+
+Reference: [Git, githooks: pre-commit](https://git-scm.com/docs/githooks#_pre_commit), [GitHub Docs, Using secrets in GitHub Actions](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions), [RFC 5737](https://www.rfc-editor.org/rfc/rfc5737), [RFC 6598 (shared address space)](https://www.rfc-editor.org/rfc/rfc6598).

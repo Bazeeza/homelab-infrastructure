@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Git pre-commit hook: refuse a commit when the public safety check fails.
+#
+# Why locally and not only in CI: in a public repository, a pushed branch is
+# already public. The CI scan finds a leak after it happened; this hook stops
+# it before the commit exists.
+#
+# Install once per clone (see docs/anonymization.md):
+#   git config core.hooksPath scripts/hooks
+#
+# Private patterns (real hostnames, real domains) are read from this file if it
+# exists. It lives outside the repository and is never committed.
+patterns_file="${HOME}/.config/homelab-infrastructure/private-patterns.txt"
+
+root="$(git rev-parse --show-toplevel)" || exit 1
+
+if [ -r "$patterns_file" ]; then
+    export EXTRA_PATTERNS_FILE="$patterns_file"
+fi
+
+# --staged: scan what the commit will contain, not the files on disk
+if ! bash "$root/scripts/check-public-safety.sh" --staged; then
+    echo
+    echo "Commit refused: replace the values above with placeholders (docs/anonymization.md),"
+    echo "stage the files again with git add, then commit."
+    exit 1
+fi
