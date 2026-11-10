@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" width="1200" height="560" role="img" aria-labelledby="titre desc">
+  <title id="titre">homelab-infrastructure architecture</title>
+  <desc id="desc">An administrator laptop, admin-ws, reaches two cloud servers over SSH with a key, inside a mesh VPN. node-a is the critical node: remote device management, its database bound to loopback, availability probes, resource history and an outbound tunnel to the tunnel provider edge, which visitors and managed devices reach over HTTPS. node-b is the automation node: n8n bound to loopback, a Telegram relay that uses outbound long polling, a cross-check of node-a every two minutes, firewall and fail2ban. node-b probes node-a and reads its metrics. All names are placeholders.</desc>
+  <defs>
+    <linearGradient id="fond" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#060b17"/>
+      <stop offset="1" stop-color="#0c1830"/>
+    </linearGradient>
+    <pattern id="grille" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#5b7bb5" fill-opacity=".18"/>
+    </pattern>
+    <marker id="fleche" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#9fb0d0"/>
+    </marker>
+    <style>
+      .t { font-family: 'Segoe UI', Helvetica, Arial, sans-serif; }
+      .m { font-family: Consolas, 'SFMono-Regular', Menlo, monospace; }
+      .boite { fill: #0f1d3a; stroke-width: 2; }
+      .item { font-size: 13px; fill: #d6e0f5; }
+      .tag { font-size: 13px; fill: #8fa3c8; }
+      .lien { stroke: #9fb0d0; stroke-width: 1.6; fill: none; }
+      .etiq { font-size: 11px; fill: #ffb454; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="560" rx="18" fill="url(#fond)"/>
+  <rect width="1200" height="560" rx="18" fill="url(#grille)"/>
+
+  <!-- Title -->
+  <text x="40" y="52" class="t" font-size="24" font-weight="700" fill="#ffffff">homelab-infrastructure</text>
+  <text x="40" y="78" class="t" font-size="14" fill="#8fa3c8">Two cloud nodes and one administrator laptop, joined by a mesh VPN. Every name is a placeholder.</text>
+
+  <!-- Mesh VPN boundary -->
+  <rect x="330" y="100" width="520" height="390" rx="16" fill="#0a1428" fill-opacity=".6" stroke="#2c4778" stroke-width="2" stroke-dasharray="8 6"/>
+  <text x="350" y="124" class="m" font-size="12" fill="#8fa3c8">MESH VPN · WireGuard based · administration travels here</text>
+
+  <!-- node-a -->
+  <rect x="360" y="140" width="460" height="150" rx="12" class="boite" stroke="#3fe0a0"/>
+  <text x="380" y="170" class="m" font-size="18" font-weight="700" fill="#3fe0a0">node-a</text>
+  <text x="470" y="170" class="t tag">critical node</text>
+  <g class="t item">
+    <text x="380" y="198">MeshCentral · remote device management</text>
+    <text x="380" y="222">MongoDB · bound to 127.0.0.1</text>
+    <text x="380" y="246">Uptime Kuma · probes, /metrics behind an API key</text>
+    <text x="380" y="270">Beszel hub · resource history · cloudflared tunnel</text>
+  </g>
+
+  <!-- node-b -->
+  <rect x="360" y="320" width="460" height="150" rx="12" class="boite" stroke="#2b9dff"/>
+  <text x="380" y="350" class="m" font-size="18" font-weight="700" fill="#2b9dff">node-b</text>
+  <text x="470" y="350" class="t tag">automation node · mesh exit node</text>
+  <g class="t item">
+    <text x="380" y="378">n8n · bound to 127.0.0.1, pinned version, 1 GB cap</text>
+    <text x="380" y="402">Telegram relay · systemd, DynamicUser, long polling</text>
+    <text x="380" y="426">Cross-check of node-a · every 2 min, alert after 3 failures</text>
+    <text x="380" y="450">ufw · fail2ban · Beszel agent</text>
+  </g>
+
+  <!-- admin-ws -->
+  <rect x="40" y="235" width="230" height="120" rx="12" class="boite" stroke="#c792ea"/>
+  <text x="60" y="265" class="m" font-size="18" font-weight="700" fill="#c792ea">admin-ws</text>
+  <g class="t item">
+    <text x="60" y="292">administrator laptop</text>
+    <text x="60" y="316">SSH private key</text>
+    <text x="60" y="340">mesh VPN client</text>
+  </g>
+
+  <!-- External services -->
+  <rect x="920" y="110" width="240" height="60" rx="12" class="boite" stroke="#ffb454"/>
+  <text x="1040" y="145" text-anchor="middle" class="t item">Visitors and managed devices</text>
+  <rect x="920" y="210" width="240" height="60" rx="12" class="boite" stroke="#ffb454"/>
+  <text x="1040" y="245" text-anchor="middle" class="t item">Tunnel provider edge</text>
+  <rect x="920" y="370" width="240" height="60" rx="12" class="boite" stroke="#ffb454"/>
+  <text x="1040" y="405" text-anchor="middle" class="t item">Telegram API</text>
+
+  <!-- Links -->
+  <path class="lien" d="M270 275 C315 275 315 215 358 215" marker-end="url(#fleche)"/>
+  <text x="282" y="232" class="t etiq">SSH with key</text>
+  <path class="lien" d="M270 315 C315 315 315 395 358 395" marker-end="url(#fleche)"/>
+  <text x="282" y="372" class="t etiq">SSH with key</text>
+
+  <path class="lien" d="M780 320 L780 292" marker-end="url(#fleche)"/>
+  <text x="770" y="309" text-anchor="end" class="t etiq">probe every 2 min · read /metrics</text>
+
+  <path class="lien" d="M820 240 L918 240" marker-end="url(#fleche)"/>
+  <text x="869" y="228" text-anchor="middle" class="t etiq">outbound</text>
+  <text x="869" y="256" text-anchor="middle" class="t etiq">tunnel</text>
+
+  <path class="lien" d="M1040 170 L1040 208" marker-end="url(#fleche)"/>
+  <text x="1050" y="194" class="t etiq">HTTPS</text>
+
+  <path class="lien" d="M820 400 L918 400" marker-end="url(#fleche)"/>
+  <text x="869" y="388" text-anchor="middle" class="t etiq">long polling</text>
+  <text x="869" y="416" text-anchor="middle" class="t etiq">outbound</text>
+
+  <!-- Legend -->
+  <g class="t" font-size="12" fill="#8fa3c8">
+    <circle cx="46" cy="522" r="6" fill="#3fe0a0"/><text x="58" y="526">critical</text>
+    <circle cx="136" cy="522" r="6" fill="#2b9dff"/><text x="148" y="526">automation</text>
+    <circle cx="246" cy="522" r="6" fill="#c792ea"/><text x="258" y="526">administration</text>
+    <circle cx="376" cy="522" r="6" fill="#ffb454"/><text x="388" y="526">external service</text>
+    <line x1="510" y1="522" x2="550" y2="522" stroke="#2c4778" stroke-width="2" stroke-dasharray="8 6"/><text x="558" y="526">mesh VPN boundary</text>
+    <text x="1160" y="526" text-anchor="end">Placeholders only · see docs/anonymization.md</text>
+  </g>
+</svg>
