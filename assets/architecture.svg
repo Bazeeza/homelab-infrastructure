@@ -40,7 +40,7 @@
   <text x="470" y="170" class="t tag">critical node</text>
   <g class="t item">
     <text x="380" y="198">MeshCentral · remote device management</text>
-    <text x="380" y="222">MongoDB · bound to 127.0.0.1</text>
+    <text x="380" y="222">Public: HTTPS 443 and 80 only · SSH on the mesh only</text>
     <text x="380" y="246">Uptime Kuma · probes, /metrics behind an API key</text>
     <text x="380" y="270">Beszel hub · resource history · cloudflared tunnel</text>
   </g>
