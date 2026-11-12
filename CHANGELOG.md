@@ -15,6 +15,11 @@ All notable changes to this documentation are listed here. Format based on [Keep
 - Example configuration with placeholders: sshd hardening drop-in, admin-ws SSH client config, n8n Compose file (`configs/`).
 - ADR 0005: publish container ports on loopback only.
 - `scripts/ufw-baseline.sh` (prints the firewall plan, applies it only with `--apply`, refuses to cut the running SSH session) and `scripts/audit-listening-ports.sh` (flags sockets open on all interfaces), with offline tests run in CI.
+- Monitoring section: overview of the three layers and who watches whom, Uptime Kuma guide, Beszel guide, cross-check guide with install, alert path test and rollback ([docs/monitoring/](docs/monitoring/README.md)).
+- ADR 0006: watch each node from another node.
+- `scripts/cross-check.sh` (generic rewrite of the cross-check of node-a: per-probe failure counter, one alert per outage, recovery message, configuration read as data) with an example configuration and cron schedule (`configs/monitoring/`).
+- `scripts/kuma-status.sh` (one line per Uptime Kuma probe, problems first, API key kept out of the command line).
+- Offline tests of both monitoring scripts, run in CI with the network tests.
 
 ### Changed
 

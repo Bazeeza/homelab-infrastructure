@@ -1,0 +1,8 @@
+# /etc/cron.d/cross-check  (owner root, mode 644)
+# Every 2 minutes, as a dedicated system user without a login shell.
+# Each line of output goes to the system journal with the tag "cross-check":
+#   journalctl -t cross-check --since "1 hour ago"
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+*/2 * * * * cross-check /usr/local/sbin/cross-check.sh --config /etc/cross-check/cross-check.conf 2>&1 | logger -t cross-check

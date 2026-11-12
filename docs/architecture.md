@@ -31,14 +31,14 @@ Both servers run Ubuntu, keep their clock in **UTC**, and use systemd timers or 
 |---|---|---|---|
 | n8n | Docker container, pinned version, 1 GB memory cap | `127.0.0.1:5678` only, SSH tunnel for the editor | Workflow engine of the read-only status bot |
 | Telegram relay | systemd service, `DynamicUser=yes` | no port (long polling, outbound) | Receives bot commands without exposing n8n to the Internet |
-| Cross-check of node-a | cron, every 2 minutes | — | Alerts by Telegram after 3 consecutive failures |
+| Cross-check of node-a | cron, every 2 minutes | — | Alerts by Telegram after 3 consecutive failures ([details](monitoring/cross-check.md)) |
 | Beszel agent | service | — | Metrics for the hub on node-a |
 | ufw and fail2ban | host firewall, log-based banning | — | Filters inbound traffic, bans addresses after repeated failed logins |
 
 > [!NOTE]
 > Docker publishes container ports with its own iptables rules, **before** ufw sees the packet. A container published as `-p 5678:5678` would be reachable from the Internet even with ufw set to deny. That is why n8n is published as `-p 127.0.0.1:5678:5678`, and why every new container follows the same rule. Details in [Docker on loopback](network/docker-loopback.md) and [ADR 0005](adr/0005-publish-container-ports-on-loopback.md).
 
-The zones, the port matrix and the SSH and firewall settings are in [Network design and access](network/README.md).
+The zones, the port matrix and the SSH and firewall settings are in [Network design and access](network/README.md). Who watches what, and how an outage reaches the administrator, is in [Monitoring](monitoring/README.md).
 
 ## How traffic flows
 
