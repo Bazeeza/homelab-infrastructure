@@ -28,6 +28,8 @@
 |---|---|---|
 | Architecture | [docs/architecture.md](docs/architecture.md) | What runs where, how each service is reached, how traffic flows. |
 | Network design and access | [docs/network/](docs/network/README.md) | Three zones (Internet, mesh, loopback), the port matrix, SSH keys only, ufw rules, Docker on loopback, checks from outside. |
+| Monitoring | [docs/monitoring/](docs/monitoring/README.md) | Availability probes, resource history, and a cross-check that alerts once per outage and says when it is over. |
+| Watch from another node | [ADR 0006](docs/adr/0006-watch-each-node-from-another-node.md) | A machine cannot report its own death, so node-b watches node-a. |
 | Administration over a mesh VPN | [ADR 0002](docs/adr/0002-administration-only-over-mesh-vpn.md) | SSH, dashboards and editors are reached through the mesh or an SSH tunnel, not through the public address. |
 | Container ports on loopback | [ADR 0005](docs/adr/0005-publish-container-ports-on-loopback.md) | Docker bypasses the host firewall, so containers are published on `127.0.0.1`. |
 | Role separation | [ADR 0003](docs/adr/0003-separate-critical-and-automation-roles.md) | The automation lives on its own node and only reads the critical node. |
@@ -55,23 +57,27 @@ homelab-infrastructure/
 │   └── architecture.svg         diagram above
 ├── configs/                     example configuration, placeholders only
 │   ├── ssh/                     sshd hardening drop-in, admin-ws client config
-│   └── docker/                  n8n Compose file published on loopback
+│   ├── docker/                  n8n Compose file published on loopback
+│   └── monitoring/              cross-check configuration and cron schedule
 ├── docs/
 │   ├── architecture.md          roles, services, traffic flows
 │   ├── anonymization.md         placeholders and the safety check
 │   ├── network/                 zones, mesh VPN, SSH, firewall, Docker, checks
+│   ├── monitoring/              Uptime Kuma, Beszel, cross-check of node-a
 │   └── adr/                     architecture decision records
 │       ├── README.md            index and how to write one
 │       ├── 0000-template.md
-│       └── 0001 ... 0005
+│       └── 0001 ... 0006
 ├── scripts/
 │   ├── check-public-safety.sh   fails on real addresses, keys, tokens
 │   ├── ufw-baseline.sh          prints, or applies, the firewall baseline
 │   ├── audit-listening-ports.sh flags sockets open on all interfaces
+│   ├── cross-check.sh           watches another node, one alert per outage
+│   ├── kuma-status.sh           one line per Uptime Kuma probe
 │   └── hooks/pre-commit         same check before every local commit
 ├── tests/
-│   ├── run-tests.sh             offline tests of the network scripts
-│   └── fixtures/                saved ss output
+│   ├── run-tests.sh             offline tests of the network and monitoring scripts
+│   └── fixtures/                saved ss and Uptime Kuma output
 ├── CHANGELOG.md
 ├── LICENSE
 └── README.md
@@ -85,7 +91,7 @@ The repository is written in stages. Each stage documents what already runs, wit
 |---|---|---|
 | Foundations | Architecture overview, diagram, ADR 0001 to 0004, anonymization rules and safety check | Done |
 | Network and access | Mesh VPN setup, SSH keys and `sshd_config`, host firewall rules, Docker on loopback, verification from outside, ADR 0005 | Done |
-| Monitoring | Availability probes, resource history, the cross-check script rewritten with placeholders | Planned |
+| Monitoring | Availability probes, resource history, the cross-check script rewritten with placeholders, ADR 0006 | Done |
 | Telegram relay | Relay code with every value in environment variables, the hardened systemd unit explained line by line, tests | Planned |
 | Backup and recovery | What is backed up, restore test, rollback plan, lessons learned | Planned |
 
