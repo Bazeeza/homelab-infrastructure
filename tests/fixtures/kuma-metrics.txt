@@ -1,0 +1,18 @@
+# HELP monitor_cert_days_remaining The number of days remaining until the certificate expires
+# TYPE monitor_cert_days_remaining gauge
+monitor_cert_days_remaining{monitor_name="Remote management (web)",monitor_type="http",monitor_url="https://remote.example.com",monitor_hostname="null",monitor_port="null"} 61
+monitor_cert_days_remaining{monitor_name="Public site",monitor_type="http",monitor_url="https://example.com",monitor_hostname="null",monitor_port="null"} 74
+# HELP monitor_response_time Monitor Response Time (ms)
+# TYPE monitor_response_time gauge
+monitor_response_time{monitor_name="Remote management (web)",monitor_type="http",monitor_url="https://remote.example.com",monitor_hostname="null",monitor_port="null"} 182
+monitor_response_time{monitor_name="node-b SSH",monitor_type="port",monitor_url="https://",monitor_hostname="node-b",monitor_port="22"} 41
+# HELP monitor_status Monitor Status (1 = UP, 0= DOWN, 2= PENDING, 3= MAINTENANCE)
+# TYPE monitor_status gauge
+monitor_status{monitor_name="Remote management (web)",monitor_type="http",monitor_url="https://remote.example.com",monitor_hostname="null",monitor_port="null"} 1
+monitor_status{monitor_name="Public site",monitor_type="http",monitor_url="https://example.com",monitor_hostname="null",monitor_port="null"} 2
+monitor_status{monitor_name="node-b SSH",monitor_type="port",monitor_url="https://",monitor_hostname="node-b",monitor_port="22"} 1
+monitor_status{monitor_name="admin-ws",monitor_type="ping",monitor_url="https://",monitor_hostname="admin-ws",monitor_port="null"} 0
+monitor_status{monitor_name="Beszel hub",monitor_type="http",monitor_url="http://127.0.0.1:8090",monitor_hostname="null",monitor_port="null"} 1
+monitor_status{monitor_name="Remote management \"agents\" port",monitor_type="port",monitor_url="https://",monitor_hostname="remote.example.com",monitor_port="443"} 1
+monitor_status{monitor_name="Mesh VPN exit node",monitor_type="ping",monitor_url="https://",monitor_hostname="node-b",monitor_port="null"} 1
+monitor_status{monitor_name="Outbound tunnel",monitor_type="http",monitor_url="https://example.com",monitor_hostname="null",monitor_port="null"} 1
