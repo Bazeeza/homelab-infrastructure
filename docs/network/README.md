@@ -73,9 +73,11 @@ What is allowed to listen, and where. "Public" means reachable from the Internet
 | node-a | HTTP, redirect to HTTPS and certificate validation | all interfaces, TCP 80 | **Yes** | Yes | Certificate authority, browsers |
 | node-a | SSH | all interfaces, filtered by ufw | No | Yes | admin-ws |
 | node-a | Availability monitoring, metrics endpoint with API key | Docker published port | No (target) | Yes | n8n on node-b |
+| node-a | Resource history (Beszel hub), web interface TCP 8090 | to confirm | No (target) | Yes | admin-ws |
 | node-a | Local web server of the public site | `127.0.0.1` | No | No | Outbound tunnel on the same node |
 | node-b | SSH | all interfaces, filtered by ufw | No | Yes | admin-ws |
 | node-b | n8n editor and webhook | `127.0.0.1:5678` | No | No | Telegram relay on the same node, SSH local forward |
+| node-b | Resource agent (Beszel), TCP 45876 | mesh address (target) | No (target) | Yes | Beszel hub on node-a |
 | node-b | Mesh VPN exit node | — | No | Yes | admin-ws on untrusted networks |
 | both | Mesh VPN client (WireGuard) | UDP, outbound first | Not needed | — | NAT traversal |
 

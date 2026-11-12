@@ -51,8 +51,12 @@ Use a machine that is **not** in the mesh, or admin-ws with the mesh client disc
 # node-b: nothing should be open
 nmap -Pn -p 22,5678 203.0.113.20
 
-# node-a: only 80 and 443 open
-nmap -Pn -p 22,80,443 198.51.100.10
+# node-a: only 80 and 443 open; the monitoring ports
+# (3001 Uptime Kuma, 8090 Beszel hub, 45876 Beszel agent) closed or filtered
+nmap -Pn -p 22,80,443,3001,8090,45876 198.51.100.10
+
+# node-b: the Beszel agent port is for the hub, over the mesh only
+nmap -Pn -p 45876 203.0.113.20
 
 # A broader look at the 1000 most common TCP ports
 nmap -Pn --top-ports 1000 198.51.100.10
@@ -84,9 +88,11 @@ A rescue path that has never been tried is not a rescue path. Once per quarter, 
 | Password login refused from admin-ws | To run | To run | — |
 | `nmap` from outside: SSH filtered or closed | To run | To run | — |
 | `nmap` from outside: n8n port closed | — | To run | — |
+| `nmap` from outside: monitoring ports closed (3001, 8090, 45876) | To run | To run (45876) | — |
+| Cross-check alert path tested end to end ([procedure](../monitoring/cross-check.md#test-the-alert-path)) | — | To run | — |
 | Provider console login tested | To run | To run | — |
 
-"Applied" means the change was made; the checks above confirm it independently. The *Last result* column is updated each time the checks are run. Rows marked "To run" are the open follow-ups of [ADR 0002](../adr/0002-administration-only-over-mesh-vpn.md) and [ADR 0005](../adr/0005-publish-container-ports-on-loopback.md).
+"Applied" means the change was made; the checks above confirm it independently. The *Last result* column is updated each time the checks are run. Rows marked "To run" are the open follow-ups of [ADR 0002](../adr/0002-administration-only-over-mesh-vpn.md), [ADR 0005](../adr/0005-publish-container-ports-on-loopback.md) and [ADR 0006](../adr/0006-watch-each-node-from-another-node.md).
 
 ## References
 
