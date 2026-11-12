@@ -1,0 +1,20 @@
+# /etc/cross-check/cross-check.conf  (owner root, group cross-check, mode 640)
+# Read as KEY=VALUE data by scripts/cross-check.sh; it is never executed.
+# Placeholders only: see docs/anonymization.md.
+
+# One line per probe: NAME|TYPE|TARGET. Targets use mesh names (MagicDNS),
+# so the check also fails when the mesh link between the nodes is down.
+PROBE=node-a-ssh|tcp|node-a:22
+PROBE=node-a-monitoring|http|http://node-a:3001/metrics
+PROBE=node-a-public-web|http|https://remote.example.com
+
+# 3 failures x 2 minutes: about 6 minutes of real outage before the alert
+THRESHOLD=3
+TIMEOUT=5
+
+STATE_DIR=/var/lib/cross-check
+
+# Numeric Telegram ID of the administrator; the bot answers no one else
+TELEGRAM_CHAT_ID=<TELEGRAM_USER_ID>
+# File that contains only the bot token (owner cross-check, mode 400)
+TELEGRAM_TOKEN_FILE=/etc/cross-check/telegram.token
