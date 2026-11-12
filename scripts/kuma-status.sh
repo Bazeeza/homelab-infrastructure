@@ -106,7 +106,7 @@ metrics="$(read_metrics)" || {
 re_line='^monitor_status\{(.*)\}[[:space:]]+([^[:space:]]+)'
 # Label values may contain escaped quotes and backslashes: \" and \\
 re_name='(^|,)monitor_name="(([^"\\]|\\.)*)"'
-bs='\'
+bs=$'\\'
 q='"'
 
 problems=()

@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# Tests of the network scripts. No root, no network, no real node needed:
-# the audit script reads saved `ss` output from tests/fixtures, and the
-# firewall script is only run in its default "print the plan" mode.
+# Tests of the network and monitoring scripts. No root, no real node needed:
+# the audit script reads saved `ss` output and the status script reads saved
+# Uptime Kuma metrics from tests/fixtures; the firewall script is only run in
+# its default "print the plan" mode; the cross-check only probes 127.0.0.1
+# and runs with --dry-run, so no alert is ever sent.
 #
 #   bash tests/run-tests.sh
 #
@@ -12,9 +14,20 @@ set -uo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 audit="$here/../scripts/audit-listening-ports.sh"
 ufw_plan="$here/../scripts/ufw-baseline.sh"
+kuma="$here/../scripts/kuma-status.sh"
+cross="$here/../scripts/cross-check.sh"
 fixtures="$here/fixtures"
 passed=0
 failed=0
+
+work="$(mktemp -d)"
+server_pid=""
+# shellcheck disable=SC2317  # called by the EXIT trap
+cleanup() {
+    rm -rf "$work"
+    if [ -n "$server_pid" ]; then kill "$server_pid" 2>/dev/null || true; fi
+}
+trap cleanup EXIT
 
 ok()   { passed=$((passed + 1)); printf 'PASS  %s\n' "$1"; }
 fail() { failed=$((failed + 1)); printf 'FAIL  %s\n' "$1"; }
@@ -74,6 +87,71 @@ fi
 if [ "$(id -u)" -ne 0 ]; then
     expect_code "--apply without root is refused"  1 bash "$ufw_plan" --role node-b --apply
 fi
+
+echo "== kuma-status.sh"
+metrics="$fixtures/kuma-metrics.txt"
+expect_code  "a probe down or pending fails"       1 bash "$kuma" --file "$metrics"
+expect_count "one line per probe"                  8 '^(UP|DOWN|PENDING|MAINT|UNKNOWN) ' bash "$kuma" --file "$metrics"
+expect_count "other metric series are skipped"     6 '^UP ' bash "$kuma" --file "$metrics"
+expect_count "escaped quotes in a name are undone" 1 '^UP +Remote management "agents" port$' bash "$kuma" --file "$metrics"
+expect_code  "ignored probes do not fail"          0 bash "$kuma" --file "$metrics" --ignore admin-ws --ignore "Public site"
+expect_count "ignored probes are still listed"     2 '\[ignored\]$' bash "$kuma" --file "$metrics" --ignore admin-ws --ignore "Public site"
+first_line="$(bash "$kuma" --file "$metrics" 2>/dev/null | head -n 1)"
+case "$first_line" in
+    UP*|"") fail "problems are listed first" ;;
+    *) ok "problems are listed first" ;;
+esac
+expect_code  "empty input is refused"              2 bash "$kuma"
+expect_code  "missing file is refused"             2 bash "$kuma" --file "$fixtures/does-not-exist.txt"
+expect_code  "unknown option is refused"           2 bash "$kuma" --bogus
+
+echo "== cross-check.sh (dry run, loopback only)"
+state="$work/state"
+# Port 1 on loopback: nothing listens, the connection is refused at once
+printf '%s\n' '# test' 'PROBE=svc|tcp|127.0.0.1:1' 'THRESHOLD=3' 'TIMEOUT=2' > "$work/down.conf"
+# shellcheck disable=SC2317  # called through expect_code and expect_count
+run_check() { bash "$cross" --config "$1" --state-dir "$state" --dry-run; }
+
+# Each call below is one run: the order matters, the state carries over.
+expect_code  "first failure exits 1"               1 run_check "$work/down.conf"
+expect_count "no alert before the threshold"       0 '^ALERT ' run_check "$work/down.conf"
+expect_count "one alert at the third failure"      1 '^ALERT DOWN svc ' run_check "$work/down.conf"
+expect_count "no repeated alert while still down"  0 '^ALERT ' run_check "$work/down.conf"
+read -r s_count s_alerted _ < "$state/svc.state" || true
+if [ "${s_count:-}" = "4" ] && [ "${s_alerted:-}" = "1" ]; then
+    ok "state keeps the count and the alert flag"
+else
+    fail "state keeps the count and the alert flag (got '${s_count:-} ${s_alerted:-}')"
+fi
+
+if command -v python3 >/dev/null 2>&1; then
+    port=18765
+    python3 -m http.server "$port" --bind 127.0.0.1 --directory "$work" >/dev/null 2>&1 &
+    server_pid=$!
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+        if bash -c "exec 3<>/dev/tcp/127.0.0.1/$port" 2>/dev/null; then break; fi
+        sleep 0.5
+    done
+    printf '%s\n' "PROBE=svc|tcp|127.0.0.1:$port" 'THRESHOLD=3' > "$work/up.conf"
+    expect_count "recovery message after the outage" 1 '^ALERT RECOVERED svc ' run_check "$work/up.conf"
+    expect_count "no second recovery message"        0 '^ALERT ' run_check "$work/up.conf"
+    expect_code  "all probes up exits 0"             0 run_check "$work/up.conf"
+    printf '%s\n' "PROBE=web|http|http://127.0.0.1:$port/" > "$work/http.conf"
+    expect_code  "http probe passes on an answer"    0 run_check "$work/http.conf"
+else
+    echo "SKIP  recovery and http tests: python3 not found"
+fi
+
+printf '%s\n' 'PROBE=svc|tcp|127.0.0.1:1' 'COLOUR=blue' > "$work/unknown-key.conf"
+printf '%s\n' 'PROBE=svc|udp|127.0.0.1:1' > "$work/bad-type.conf"
+printf '%s\n' 'PROBE=svc|tcp|127.0.0.1:1' 'THRESHOLD=0' > "$work/bad-threshold.conf"
+printf '%s\n' 'PROBE=bad name|tcp|127.0.0.1:1' > "$work/bad-name.conf"
+expect_code  "missing --config is refused"         2 bash "$cross" --dry-run
+expect_code  "unknown key is refused"              2 run_check "$work/unknown-key.conf"
+expect_code  "unknown probe type is refused"       2 run_check "$work/bad-type.conf"
+expect_code  "threshold of 0 is refused"           2 run_check "$work/bad-threshold.conf"
+expect_code  "unsafe probe name is refused"        2 run_check "$work/bad-name.conf"
+expect_code  "Telegram settings required to send"  2 bash "$cross" --config "$work/down.conf" --state-dir "$state"
 
 echo
 echo "$passed passed, $failed failed"

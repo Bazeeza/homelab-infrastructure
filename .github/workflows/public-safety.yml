@@ -41,6 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # Offline tests: saved ss output and the firewall plan mode, no root needed
-      - name: Run the network script tests
+      # Offline tests: saved ss and Uptime Kuma output, the firewall plan mode,
+      # and the cross-check in dry-run mode against 127.0.0.1. No root needed.
+      - name: Run the network and monitoring script tests
         run: bash tests/run-tests.sh
