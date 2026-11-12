@@ -27,7 +27,9 @@
 | Topic | Where | In one sentence |
 |---|---|---|
 | Architecture | [docs/architecture.md](docs/architecture.md) | What runs where, how each service is reached, how traffic flows. |
+| Network design and access | [docs/network/](docs/network/README.md) | Three zones (Internet, mesh, loopback), the port matrix, SSH keys only, ufw rules, Docker on loopback, checks from outside. |
 | Administration over a mesh VPN | [ADR 0002](docs/adr/0002-administration-only-over-mesh-vpn.md) | SSH, dashboards and editors are reached through the mesh or an SSH tunnel, not through the public address. |
+| Container ports on loopback | [ADR 0005](docs/adr/0005-publish-container-ports-on-loopback.md) | Docker bypasses the host firewall, so containers are published on `127.0.0.1`. |
 | Role separation | [ADR 0003](docs/adr/0003-separate-critical-and-automation-roles.md) | The automation lives on its own node and only reads the critical node. |
 | Safe automation | [ADR 0004](docs/adr/0004-human-approval-for-irreversible-actions.md) | Reversible actions may run alone; irreversible ones wait for a human "Yes". |
 | Anonymization | [docs/anonymization.md](docs/anonymization.md) | The placeholder for every real value, and the automatic check that enforces it. |
@@ -47,20 +49,29 @@
 ```text
 homelab-infrastructure/
 ├── .github/workflows/
-│   ├── public-safety.yml        scan for real values + ShellCheck
+│   ├── public-safety.yml        scan for real values, ShellCheck, script tests
 │   └── markdown.yml             markdownlint + offline link check
 ├── assets/
 │   └── architecture.svg         diagram above
+├── configs/                     example configuration, placeholders only
+│   ├── ssh/                     sshd hardening drop-in, admin-ws client config
+│   └── docker/                  n8n Compose file published on loopback
 ├── docs/
 │   ├── architecture.md          roles, services, traffic flows
 │   ├── anonymization.md         placeholders and the safety check
+│   ├── network/                 zones, mesh VPN, SSH, firewall, Docker, checks
 │   └── adr/                     architecture decision records
 │       ├── README.md            index and how to write one
 │       ├── 0000-template.md
-│       └── 0001 ... 0004
+│       └── 0001 ... 0005
 ├── scripts/
 │   ├── check-public-safety.sh   fails on real addresses, keys, tokens
+│   ├── ufw-baseline.sh          prints, or applies, the firewall baseline
+│   ├── audit-listening-ports.sh flags sockets open on all interfaces
 │   └── hooks/pre-commit         same check before every local commit
+├── tests/
+│   ├── run-tests.sh             offline tests of the network scripts
+│   └── fixtures/                saved ss output
 ├── CHANGELOG.md
 ├── LICENSE
 └── README.md
@@ -73,7 +84,7 @@ The repository is written in stages. Each stage documents what already runs, wit
 | Stage | Content | State |
 |---|---|---|
 | Foundations | Architecture overview, diagram, ADR 0001 to 0004, anonymization rules and safety check | Done |
-| Network and access | Mesh VPN setup, SSH keys and `sshd_config`, host firewall rules, Docker on loopback, verification from outside | Planned |
+| Network and access | Mesh VPN setup, SSH keys and `sshd_config`, host firewall rules, Docker on loopback, verification from outside, ADR 0005 | Done |
 | Monitoring | Availability probes, resource history, the cross-check script rewritten with placeholders | Planned |
 | Telegram relay | Relay code with every value in environment variables, the hardened systemd unit explained line by line, tests | Planned |
 | Backup and recovery | What is backed up, restore test, rollback plan, lessons learned | Planned |
