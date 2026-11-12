@@ -7,9 +7,10 @@ An **architecture decision record** (ADR) is a short page that explains one impo
 | ADR | Title | Status |
 |---|---|---|
 | [0001](0001-record-architecture-decisions.md) | Record architecture decisions | Accepted |
-| [0002](0002-administration-only-over-mesh-vpn.md) | Administration only over a mesh VPN, no public administrative port | Accepted, partly applied |
+| [0002](0002-administration-only-over-mesh-vpn.md) | Administration only over a mesh VPN, no public administrative port | Accepted, applied for SSH |
 | [0003](0003-separate-critical-and-automation-roles.md) | Separate the critical node from the automation node | Accepted, applied |
 | [0004](0004-human-approval-for-irreversible-actions.md) | Human approval for irreversible actions of the automation | Accepted, first level applied |
+| [0005](0005-publish-container-ports-on-loopback.md) | Publish container ports on loopback only | Accepted, applied to n8n |
 
 ## How to write one
 
