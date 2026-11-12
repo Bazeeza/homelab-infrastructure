@@ -20,8 +20,7 @@ Both servers run Ubuntu, keep their clock in **UTC**, and use systemd timers or 
 
 | Service | Runs as | Reached through | Purpose |
 |---|---|---|---|
-| MeshCentral | systemd service, dedicated user | HTTPS | Remote management of the owner's devices |
-| MongoDB | systemd service | `127.0.0.1` only | Database of MeshCentral |
+| MeshCentral | systemd service, dedicated user without shell, hardened unit | HTTPS | Remote management of the owner's devices; uses its embedded database, so no separate database server |
 | Uptime Kuma | Docker container | mesh VPN (n8n reads it by its mesh address) | Availability probes; `/metrics` endpoint protected by an API key |
 | Beszel hub and agent | service | web interface | CPU, memory, disk and network history of both servers |
 | Outbound tunnel (`cloudflared`) | systemd service | no inbound port | Publishes the public web front-ends through a connection that the server opens itself |
@@ -37,7 +36,9 @@ Both servers run Ubuntu, keep their clock in **UTC**, and use systemd timers or 
 | ufw and fail2ban | host firewall, log-based banning | — | Filters inbound traffic, bans addresses after repeated failed logins |
 
 > [!NOTE]
-> Docker publishes container ports with its own iptables rules, **before** ufw sees the packet. A container published as `-p 5678:5678` would be reachable from the Internet even with ufw set to deny. That is why n8n is published as `-p 127.0.0.1:5678:5678`, and why every new container follows the same rule. Details in the network design page (planned, see the [roadmap](../README.md#roadmap)).
+> Docker publishes container ports with its own iptables rules, **before** ufw sees the packet. A container published as `-p 5678:5678` would be reachable from the Internet even with ufw set to deny. That is why n8n is published as `-p 127.0.0.1:5678:5678`, and why every new container follows the same rule. Details in [Docker on loopback](network/docker-loopback.md) and [ADR 0005](adr/0005-publish-container-ports-on-loopback.md).
+
+The zones, the port matrix and the SSH and firewall settings are in [Network design and access](network/README.md).
 
 ## How traffic flows
 
@@ -73,7 +74,7 @@ flowchart LR
 
 Three rules can be read from this diagram:
 
-1. **Administration travels inside the mesh VPN.** SSH, dashboards and the n8n editor are reached through the mesh or through an SSH tunnel, not through the public address. Closing every remaining public administrative port is tracked in the decision record: [ADR 0002](adr/0002-administration-only-over-mesh-vpn.md).
+1. **Administration travels inside the mesh VPN.** SSH, dashboards and the n8n editor are reached through the mesh or through an SSH tunnel, not through the public address. SSH is closed on the public address of both nodes since 2026-11-11; the decision and its remaining checks are in [ADR 0002](adr/0002-administration-only-over-mesh-vpn.md).
 2. **Arrows into node-a come from node-b or from the mesh, never from the automation logic directly.** The bot reads monitoring data; it has no SSH key and no shell on either node. Decision record: [ADR 0003](adr/0003-separate-critical-and-automation-roles.md).
 3. **Public services are published by an outbound connection.** The tunnel and the Telegram relay both open the connection from the inside, so no inbound port is needed for them.
 

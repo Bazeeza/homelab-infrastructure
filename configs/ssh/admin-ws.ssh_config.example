@@ -1,0 +1,22 @@
+# %USERPROFILE%\.ssh\config on admin-ws (Windows OpenSSH client)
+#
+# Placeholders only. The node names resolve inside the mesh VPN (MagicDNS),
+# so this file contains no address at all.
+
+Host node-a node-b
+    User <ADMIN_USER>
+    IdentityFile ~/.ssh/id_ed25519_admin-ws
+    # Offer only this key: an agent holding many keys could hit MaxAuthTries 3
+    IdentitiesOnly yes
+    ServerAliveInterval 30
+    # Refuse a host whose key changed instead of asking
+    StrictHostKeyChecking yes
+
+# `ssh n8n-editor` opens the n8n editor tunnel: then browse http://127.0.0.1:5678
+Host n8n-editor
+    HostName node-b
+    User <ADMIN_USER>
+    IdentityFile ~/.ssh/id_ed25519_admin-ws
+    IdentitiesOnly yes
+    LocalForward 5678 127.0.0.1:5678
+    # Use with `ssh -N n8n-editor`: -N opens the tunnel without a remote shell

@@ -35,3 +35,12 @@ jobs:
           mapfile -t scripts < <(git ls-files '*.sh')
           if [ "${#scripts[@]}" -eq 0 ]; then echo "No shell scripts."; exit 0; fi
           shellcheck --severity=style "${scripts[@]}"
+
+  script-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Offline tests: saved ss output and the firewall plan mode, no root needed
+      - name: Run the network script tests
+        run: bash tests/run-tests.sh

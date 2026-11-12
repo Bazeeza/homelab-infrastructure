@@ -1,0 +1,34 @@
+# Compose description of the n8n container on node-b (placeholders only):
+# same settings as the running container, written as a reusable example.
+#
+# Explained in docs/network/docker-loopback.md.
+# Secrets come from /opt/n8n/.env (mode 600, never committed). Example keys:
+#   N8N_ENCRYPTION_KEY=<N8N_ENCRYPTION_KEY>
+
+services:
+  n8n:
+    # Pinned version: an upgrade is a decision, not a side effect of a restart
+    image: docker.n8n.io/n8nio/n8n:<N8N_VERSION>
+    restart: unless-stopped
+    ports:
+      # Loopback only. "5678:5678" would publish on every interface, and
+      # Docker's own rules would let it through even with ufw set to deny.
+      - "127.0.0.1:5678:5678"
+    env_file: .env
+    environment:
+      - GENERIC_TIMEZONE=America/Toronto
+      # Delete execution data after 7 days (168 hours) to keep the disk small
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=168
+    volumes:
+      - n8n_data:/home/node/.n8n
+    # The node has under 4 GB of RAM: n8n may not take more than 1 GB of it
+    mem_limit: 1g
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  n8n_data:
