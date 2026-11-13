@@ -298,7 +298,9 @@ def poll_once(config, telegram, store, offset, forward=forward_to_webhook):
     if offset is not None:
         params["offset"] = offset
     updates = telegram.call("getUpdates", params, config.poll_timeout + HTTP_TIMEOUT)
-    for update in updates or []:
+    if not isinstance(updates, list):
+        raise TelegramError("getUpdates: unexpected result (not a list)")
+    for update in updates:
         update_id = _as_dict(update).get("update_id")
         if type(update_id) is not int:
             log("ignored: update without a numeric update_id")
