@@ -30,7 +30,7 @@ Both servers run Ubuntu, keep their clock in **UTC**, and use systemd timers or 
 | Service | Runs as | Reached through | Purpose |
 |---|---|---|---|
 | n8n | Docker container, pinned version, 1 GB memory cap | `127.0.0.1:5678` only, SSH tunnel for the editor | Workflow engine of the read-only status bot |
-| Telegram relay | systemd service, `DynamicUser=yes` | no port (long polling, outbound) | Receives bot commands without exposing n8n to the Internet |
+| Telegram relay | systemd service, `DynamicUser=yes` | no port (long polling, outbound) | Receives bot commands without exposing n8n to the Internet ([details](relay/README.md)) |
 | Cross-check of node-a | cron, every 2 minutes | — | Alerts by Telegram after 3 consecutive failures ([details](monitoring/cross-check.md)) |
 | Beszel agent | service | — | Metrics for the hub on node-a |
 | ufw and fail2ban | host firewall, log-based banning | — | Filters inbound traffic, bans addresses after repeated failed logins |
@@ -80,4 +80,4 @@ Three rules can be read from this diagram:
 
 ## The status bot in one paragraph
 
-A command sent to the Telegram bot is picked up by the relay on node-b (long polling: the relay asks Telegram for new messages, Telegram never connects to the server). The relay drops anything that does not come from the single allowed user ID or is not a known command, then posts a small JSON object to the n8n webhook on `127.0.0.1`. n8n checks the sender and the command a second time, reads the Uptime Kuma metrics of node-a over the mesh VPN, formats one line per probe and answers through the Telegram API. No language model is involved at this stage: the plumbing had to work first. Decision record on how much autonomy the bot may get: [ADR 0004](adr/0004-human-approval-for-irreversible-actions.md).
+A command sent to the Telegram bot is picked up by the relay on node-b (long polling: the relay asks Telegram for new messages, Telegram never connects to the server). The relay drops anything that does not come from the single allowed user ID or is not a known command, then posts a small JSON object to the n8n webhook on `127.0.0.1`. n8n checks the sender and the command a second time, reads the Uptime Kuma metrics of node-a over the mesh VPN, formats one line per probe and answers through the Telegram API. No language model is involved at this stage: the plumbing had to work first. The relay, its hardened unit and its tests are described in the [relay guide](relay/README.md); why it pulls instead of receiving a webhook is [ADR 0007](adr/0007-pull-bot-commands-by-long-polling.md). Decision record on how much autonomy the bot may get: [ADR 0004](adr/0004-human-approval-for-irreversible-actions.md).

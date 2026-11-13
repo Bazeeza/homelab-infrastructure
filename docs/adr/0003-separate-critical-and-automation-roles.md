@@ -20,7 +20,7 @@ We will run **all automation on node-b and never on node-a**, and give it **read
 | No automation on node-a | n8n, the Telegram relay and the cross-check script run on node-b only. |
 | Read-only data access | n8n reads the Uptime Kuma `/metrics` endpoint of node-a over the mesh VPN with a **read-only API key**. It has no SSH key and no shell on node-a. |
 | Limited sudo for tooling | The administrative account used by tools has password-less `sudo` only for read-only commands (`docker ps`, `docker logs`, `docker inspect`, `docker stats`, `systemctl status`, `systemctl is-active`, `systemctl is-enabled`, `journalctl`). Everything else, including `docker exec`, asks for the password, so a human runs it. |
-| Sandboxed relay | The Telegram relay is a systemd service with `DynamicUser=yes`, a read-only file system and a 64 MB memory limit. It reads the bot token through `LoadCredential=`, so the token is never in an environment variable or in the code. |
+| Sandboxed relay | The Telegram relay is a systemd service with `DynamicUser=yes`, a read-only file system and a 64 MB memory limit. It reads the bot token through `LoadCredential=`, so the token is never in an environment variable or in the code. Code, unit and tests: [relay guide](../relay/README.md). |
 | Two filters | The relay ignores, without answering, any message that is not from the single allowed user ID (`<TELEGRAM_USER_ID>`) in a private chat, and forwards only known commands. n8n checks the sender and the command a second time. Free text never reaches n8n. |
 | Cross-check | node-b probes node-a every 2 minutes and sends a Telegram alert after 3 consecutive failures, so an outage of node-a is reported by a machine that is still running. |
 

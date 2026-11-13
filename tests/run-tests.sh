@@ -3,7 +3,9 @@
 # the audit script reads saved `ss` output and the status script reads saved
 # Uptime Kuma metrics from tests/fixtures; the firewall script is only run in
 # its default "print the plan" mode; the cross-check only probes 127.0.0.1
-# and runs with --dry-run, so no alert is ever sent.
+# and runs with --dry-run, so no alert is ever sent; the relay installer only
+# runs with --dry-run against a fake root in a temporary folder.
+# The relay itself is tested in Python: tests/test_telegram_relay.py.
 #
 #   bash tests/run-tests.sh
 #
@@ -16,6 +18,7 @@ audit="$here/../scripts/audit-listening-ports.sh"
 ufw_plan="$here/../scripts/ufw-baseline.sh"
 kuma="$here/../scripts/kuma-status.sh"
 cross="$here/../scripts/cross-check.sh"
+installer="$here/../scripts/install-telegram-relay.sh"
 fixtures="$here/fixtures"
 passed=0
 failed=0
@@ -152,6 +155,40 @@ expect_code  "unknown probe type is refused"       2 run_check "$work/bad-type.c
 expect_code  "threshold of 0 is refused"           2 run_check "$work/bad-threshold.conf"
 expect_code  "unsafe probe name is refused"        2 run_check "$work/bad-name.conf"
 expect_code  "Telegram settings required to send"  2 bash "$cross" --config "$work/down.conf" --state-dir "$state"
+
+echo "== install-telegram-relay.sh (dry run in a fake root)"
+fake="$work/root"
+conf="$fake/etc/telegram-relay/relay.conf"
+token="$fake/etc/telegram-relay/telegram.token"
+mkdir -p "$fake/etc/telegram-relay" "$fake/etc/systemd/system"
+# shellcheck disable=SC2317  # called through expect_code and expect_count
+install_dry() { bash "$installer" --dry-run --root "$fake" "$@"; }
+write_conf() { printf '%s\n' "$@" > "$conf"; }
+webhook_line='RELAY_WEBHOOK_URL=http://127.0.0.1:5678/webhook/test'
+
+expect_code  "unknown option is refused"           2 bash "$installer" --bogus
+expect_code  "--root without --dry-run is refused" 2 bash "$installer" --root "$fake"
+expect_code  "missing settings file is refused"    1 install_dry
+write_conf 'RELAY_ALLOWED_USER_ID=<TELEGRAM_USER_ID>' "$webhook_line"
+expect_code  "placeholder left is refused"         1 install_dry
+write_conf "$webhook_line"
+expect_code  "missing user ID is refused"          1 install_dry
+write_conf 'RELAY_ALLOWED_USER_ID=111111111' "$webhook_line"
+expect_code  "missing token is refused"            1 install_dry
+printf '%s\n' 'TEST' > "$token"
+chmod 644 "$token"
+expect_code  "token readable by others is refused" 1 install_dry
+chmod 600 "$token"
+expect_code  "complete preparation passes"         0 install_dry
+expect_count "five planned commands"               5 '^would run: ' install_dry
+expect_count "code copy is owned by root"          2 '^would run: install -o root -g root -m 644 ' install_dry
+expect_code  "wrong node is refused"               1 install_dry --expect-host "not-$(hostname)"
+expect_code  "right node passes"                   0 install_dry --expect-host "$(hostname)"
+touch "$fake/etc/systemd/system/telegram-relay.service"
+expect_code  "existing unit is never overwritten"  1 install_dry
+if [ "$(id -u)" -ne 0 ]; then
+    expect_code "real install without root is refused" 1 bash "$installer"
+fi
 
 echo
 echo "$passed passed, $failed failed"

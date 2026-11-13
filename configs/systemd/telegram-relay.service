@@ -1,0 +1,52 @@
+# /etc/systemd/system/telegram-relay.service
+# Hardened unit of the Telegram relay on node-b (placeholders only).
+# Every line is explained in docs/relay/systemd-unit.md.
+
+[Unit]
+Description=Telegram relay (long polling) to the local workflow webhook
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -u /usr/local/lib/telegram-relay/telegram_relay.py
+
+# Settings, no secret: user ID, webhook URL, commands
+EnvironmentFile=/etc/telegram-relay/relay.conf
+
+# The token: systemd (root) reads the file and gives the service a private,
+# read-only copy in $CREDENTIALS_DIRECTORY. The service never sees the original.
+LoadCredential=telegram.token:/etc/telegram-relay/telegram.token
+
+# Throw-away user created at start, without shell or home
+DynamicUser=yes
+StateDirectory=telegram-relay
+
+Restart=on-failure
+RestartSec=10
+# Exit code 2 = configuration error: restarting would not fix it
+RestartPreventExitStatus=2
+
+# Sandbox: the process sees a read-only system and cannot gain privileges
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+MemoryMax=64M
+
+[Install]
+WantedBy=multi-user.target

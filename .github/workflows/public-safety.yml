@@ -42,6 +42,27 @@ jobs:
       - uses: actions/checkout@v5
 
       # Offline tests: saved ss and Uptime Kuma output, the firewall plan mode,
-      # and the cross-check in dry-run mode against 127.0.0.1. No root needed.
-      - name: Run the network and monitoring script tests
+      # the cross-check in dry-run mode against 127.0.0.1, and the relay
+      # installer in dry-run mode against a fake root. No root needed.
+      - name: Run the network, monitoring and installer script tests
         run: bash tests/run-tests.sh
+
+  relay-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # 3.10 and 3.12: the python3 of Ubuntu 22.04 and 24.04 LTS
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Standard library only: nothing to install. The fake Bot API and the
+      # fake webhook run on 127.0.0.1, so no Telegram account is needed.
+      - name: Compile and test the Telegram relay
+        run: |
+          python -m py_compile relay/telegram_relay.py
+          python -m unittest discover -s tests -p "test_*.py" -v

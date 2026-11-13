@@ -17,6 +17,7 @@ This repository describes a real, running infrastructure. It is public, so every
 | Mesh VPN addresses (real ones are in the `100.64/10` range) | `192.0.2.10` (node-a), `192.0.2.20` (node-b), `192.0.2.30` (admin-ws) | The real mesh addresses are stable and tied to the account. The documentation range keeps the examples readable. |
 | Administrative Linux account | `<ADMIN_USER>` | A valid user name is half of a login attempt. |
 | Telegram user ID and bot token | `<TELEGRAM_USER_ID>`, `<TELEGRAM_BOT_TOKEN>` | The ID is the only filter between the bot and strangers; the token *is* the bot. |
+| Path of the n8n webhook called by the relay, name of the n8n container | `<WEBHOOK_PATH>`, `<N8N_CONTAINER>` | The webhook path is the only thing a local process needs to trigger the workflow. |
 | Tunnel ID, API keys, encryption keys | `<TUNNEL_ID>`, `<API_KEY>`, `<N8N_ENCRYPTION_KEY>` | Credentials. |
 | Hosting providers | "provider 1", "provider 2" | Not needed to understand the design; named only where a provider feature matters. |
 

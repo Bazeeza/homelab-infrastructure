@@ -31,6 +31,10 @@ id_ed25519*
 *.avant
 exports/
 
+# Python bytecode left by the relay tests
+__pycache__/
+*.pyc
+
 # Editors and operating systems
 .vscode/
 .idea/

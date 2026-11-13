@@ -20,6 +20,12 @@ All notable changes to this documentation are listed here. Format based on [Keep
 - `scripts/cross-check.sh` (generic rewrite of the cross-check of node-a: per-probe failure counter, one alert per outage, recovery message, configuration read as data) with an example configuration and cron schedule (`configs/monitoring/`).
 - `scripts/kuma-status.sh` (one line per Uptime Kuma probe, problems first, API key kept out of the command line).
 - Offline tests of both monitoring scripts, run in CI with the network tests.
+- Telegram relay (`relay/telegram_relay.py`): generic rewrite of the relay on node-b, every installation value in environment variables, token through a systemd credential, loopback-only webhook, two filters.
+- Hardened systemd unit and settings example for the relay (`configs/systemd/`), with `RestartPreventExitStatus=2` on configuration errors.
+- `scripts/install-telegram-relay.sh`: dry-run mode, `--expect-host` guard, refuses a placeholder left in the settings or a token readable by others, never overwrites a unit.
+- Relay unit tests with a fake Bot API and a fake webhook (`tests/test_telegram_relay.py`), run in CI on Python 3.10 and 3.12; installer tests in `tests/run-tests.sh`.
+- Relay guide and line-by-line explanation of its unit ([docs/relay/](docs/relay/README.md)).
+- ADR 0007: pull bot commands by long polling, never expose the workflow engine.
 
 ### Changed
 
