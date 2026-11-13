@@ -1,0 +1,17 @@
+# /etc/telegram-relay/relay.conf - settings of the Telegram relay (no secret here).
+# Read by systemd (EnvironmentFile=), not by a shell: no $VARIABLE expansion,
+# no command runs. One KEY=value per line. Owner root, mode 644.
+# The bot token is NOT here: it is in /etc/telegram-relay/telegram.token (root, mode 600).
+# Explained in docs/relay/README.md.
+
+# Numeric Telegram user ID of the only person allowed to use the bot (required)
+RELAY_ALLOWED_USER_ID=<TELEGRAM_USER_ID>
+
+# Local webhook of the workflow; the relay refuses any host other than loopback (required)
+RELAY_WEBHOOK_URL=http://127.0.0.1:5678/webhook/<WEBHOOK_PATH>
+
+# Commands forwarded to the workflow, separated by spaces; anything else gets the help text
+RELAY_COMMANDS=/status
+
+# Optional: long polling timeout in seconds (0 to 50, default 50)
+# RELAY_POLL_TIMEOUT=50
