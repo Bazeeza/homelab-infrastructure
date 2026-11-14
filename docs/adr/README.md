@@ -13,6 +13,7 @@ An **architecture decision record** (ADR) is a short page that explains one impo
 | [0005](0005-publish-container-ports-on-loopback.md) | Publish container ports on loopback only | Accepted, applied to n8n |
 | [0006](0006-watch-each-node-from-another-node.md) | Watch each node from another node | Accepted, applied for node-a |
 | [0007](0007-pull-bot-commands-by-long-polling.md) | Pull bot commands by long polling, never expose the workflow engine | Accepted, applied |
+| [0008](0008-keep-backups-and-keys-apart.md) | Keep backups off the node they protect, and the keys apart from the backups | Accepted, partly applied |
 
 ## How to write one
 
