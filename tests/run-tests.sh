@@ -4,7 +4,8 @@
 # Uptime Kuma metrics from tests/fixtures; the firewall script is only run in
 # its default "print the plan" mode; the cross-check only probes 127.0.0.1
 # and runs with --dry-run, so no alert is ever sent; the relay installer only
-# runs with --dry-run against a fake root in a temporary folder.
+# runs with --dry-run against a fake root in a temporary folder; the backup
+# scripts only archive, rotate and extract files in a temporary folder.
 # The relay itself is tested in Python: tests/test_telegram_relay.py.
 #
 #   bash tests/run-tests.sh
@@ -189,6 +190,71 @@ expect_code  "existing unit is never overwritten"  1 install_dry
 if [ "$(id -u)" -ne 0 ]; then
     expect_code "real install without root is refused" 1 bash "$installer"
 fi
+
+echo "== backup-rotate.sh and verify-backup.sh (temporary folders only)"
+backup="$here/../scripts/backup-rotate.sh"
+verify="$here/../scripts/verify-backup.sh"
+src="$work/svc-data"
+bk="$work/backups"
+mkdir -p "$src/sub"
+printf '%s\n' 'one' > "$src/a.txt"
+printf '%s\n' 'two' > "$src/sub/b.txt"
+# shellcheck disable=SC2317  # called through expect_code and expect_count
+backup_at() { BACKUP_NOW="$1" bash "$backup" --source "$src" --dest "$bk" --name svc --keep 3 "${@:2}"; }
+count_archives() { find "$bk" -maxdepth 1 -name 'svc-*.tar.gz' | wc -l; }
+
+expect_code  "missing --dest is refused"           2 bash "$backup" --source "$src"
+expect_code  "keep of 0 is refused"                2 bash "$backup" --source "$src" --dest "$bk" --keep 0
+expect_code  "unsafe name is refused"              2 bash "$backup" --source "$src" --dest "$bk" --name 'svc/x'
+expect_code  "destination inside source refused"   2 bash "$backup" --source "$src" --dest "$src/bk"
+expect_code  "malformed BACKUP_NOW is refused"     2 backup_at "yesterday"
+expect_count "dry run plans archive and checksum"  2 '^would write: ' backup_at 20260101T040000Z --dry-run
+if [ -e "$bk" ]; then fail "dry run creates nothing"; else ok "dry run creates nothing"; fi
+
+for day in 01 02 03 04 05; do
+    backup_at "202601${day}T040000Z" >/dev/null 2>&1 </dev/null || true
+done
+if [ "$(count_archives)" -eq 3 ]; then ok "rotation keeps the newest 3"; else fail "rotation keeps the newest 3 (got $(count_archives))"; fi
+if [ -f "$bk/svc-20260105T040000Z.tar.gz.sha256" ] && [ ! -e "$bk/svc-20260102T040000Z.tar.gz" ] \
+    && [ ! -e "$bk/svc-20260102T040000Z.tar.gz.sha256" ]; then
+    ok "oldest archives and their checksums are deleted"
+else
+    fail "oldest archives and their checksums are deleted"
+fi
+printf '%s\n' 'not a backup' > "$bk/notes.txt"
+printf '%s\n' 'other job' > "$bk/svc-extra-20250101T000000Z.tar.gz"
+expect_count "plan deletes only the oldest"        1 '^would delete: .*svc-20260103T040000Z\.tar\.gz$' backup_at 20260106T040000Z --dry-run
+backup_at 20260106T040000Z >/dev/null 2>&1 </dev/null || true
+if [ -f "$bk/notes.txt" ] && [ -f "$bk/svc-extra-20250101T000000Z.tar.gz" ]; then
+    ok "files outside the name pattern are never touched"
+else
+    fail "files outside the name pattern are never touched"
+fi
+expect_code  "an existing archive is not overwritten" 1 backup_at 20260106T040000Z
+mode="$(stat -c '%a' "$bk")"
+if [ "$mode" = "700" ]; then ok "backup folder is mode 700"; else fail "backup folder is mode 700 (got $mode)"; fi
+
+latest="$bk/svc-20260106T040000Z.tar.gz"
+expect_code  "a good archive passes"               0 bash "$verify" "$latest"
+expect_count "all files are extracted"             1 '^OK +extracted 2 file' bash "$verify" "$latest"
+expect_code  "--latest finds the newest archive"   0 bash "$verify" --latest "$bk" --scratch "$work"
+expect_code  "a fresh archive passes the age check" 0 bash "$verify" "$latest" --max-age-hours 26
+touch -d '3 days ago' "$bk/svc-20260105T040000Z.tar.gz"
+expect_code  "an old archive fails the age check"  1 bash "$verify" "$bk/svc-20260105T040000Z.tar.gz" --max-age-hours 26
+# Checksum of the original under the copy's name, then one byte changes
+cp "$latest" "$work/tampered.tar.gz"
+( cd "$work" && sha256sum tampered.tar.gz > tampered.tar.gz.sha256 )
+expect_code  "a copy with its own checksum passes" 0 bash "$verify" "$work/tampered.tar.gz"
+printf 'x' >> "$work/tampered.tar.gz"
+expect_code  "a changed archive fails the checksum" 1 bash "$verify" "$work/tampered.tar.gz"
+rm -f "$work/tampered.tar.gz.sha256"
+expect_code  "a missing checksum fails"            1 bash "$verify" "$work/tampered.tar.gz"
+( cd "$work" && tar -czPf "$work/absolute.tar.gz" "$src/a.txt" && sha256sum absolute.tar.gz > absolute.tar.gz.sha256 )
+expect_code  "an absolute path is refused"         1 bash "$verify" "$work/absolute.tar.gz"
+( cd "$src" && tar -czPf "$work/dotdot.tar.gz" ../svc-data/a.txt && cd "$work" && sha256sum dotdot.tar.gz > dotdot.tar.gz.sha256 )
+expect_code  "a '..' path is refused"              1 bash "$verify" "$work/dotdot.tar.gz"
+expect_code  "no archive is a usage error"         2 bash "$verify"
+expect_code  "unknown option is refused"           2 bash "$verify" --bogus
 
 echo
 echo "$passed passed, $failed failed"

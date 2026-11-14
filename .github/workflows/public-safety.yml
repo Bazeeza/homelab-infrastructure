@@ -43,8 +43,9 @@ jobs:
 
       # Offline tests: saved ss and Uptime Kuma output, the firewall plan mode,
       # the cross-check in dry-run mode against 127.0.0.1, and the relay
-      # installer in dry-run mode against a fake root. No root needed.
-      - name: Run the network, monitoring and installer script tests
+      # installer in dry-run mode against a fake root, the backup and verify
+      # scripts in a temporary folder. No root needed.
+      - name: Run the network, monitoring, installer and backup script tests
         run: bash tests/run-tests.sh
 
   relay-tests:
