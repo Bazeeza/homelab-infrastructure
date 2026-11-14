@@ -26,6 +26,12 @@ All notable changes to this documentation are listed here. Format based on [Keep
 - Relay unit tests with a fake Bot API and a fake webhook (`tests/test_telegram_relay.py`), run in CI on Python 3.10 and 3.12; installer tests in `tests/run-tests.sh`.
 - Relay guide and line-by-line explanation of its unit ([docs/relay/](docs/relay/README.md)).
 - ADR 0007: pull bot commands by long polling, never expose the workflow engine.
+- Backup and recovery section: inventory with what is deliberately not backed up, recovery objectives, pull-based off-site plan ([docs/backup/](docs/backup/README.md)).
+- `scripts/backup-rotate.sh` (dated archive with checksum, written atomically, count-based rotation) and `scripts/verify-backup.sh` (age, checksum, unsafe paths, extraction into a scratch folder), with offline tests in CI.
+- n8n backup service and daily timer (`configs/backup/`): credentials exported still encrypted, encryption key kept apart, read-back check after each archive.
+- n8n backup and restore guide, restore test procedure with an empty results table.
+- Rollback plan ([docs/rollback.md](docs/rollback.md)) and lessons learned ([docs/lessons-learned.md](docs/lessons-learned.md)).
+- ADR 0008: keep backups off the node they protect, and the keys apart from the backups.
 
 ### Changed
 

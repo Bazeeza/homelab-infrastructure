@@ -17,7 +17,7 @@
   <a href="https://github.com/Bazeeza/homelab-infrastructure/actions/workflows/markdown.yml"><img src="https://img.shields.io/github/actions/workflow/status/Bazeeza/homelab-infrastructure/markdown.yml?branch=main&style=flat-square&label=Markdown" alt="Markdown CI status"/></a>
 </p>
 
-> **En bref (français) :** documentation publique et **anonymisée** d'une petite infrastructure personnelle : deux serveurs infonuagiques et un portable d'administration reliés par un **réseau privé maillé** (Tailscale, basé sur WireGuard). Le premier serveur (`node-a`) est critique : gestion à distance des appareils et supervision. Le second (`node-b`) porte toute l'automatisation : moteur de flux n8n, relais Telegram et veille croisée du premier. Le dépôt explique surtout **pourquoi** : chaque choix important est un **ADR** (architecture decision record) avec le contexte, la décision, son coût, les options rejetées et la façon de le vérifier. Aucune vraie adresse, aucun vrai nom d'hôte ni secret : tout est remplacé par des valeurs d'exemple (`node-a`, `example.com`, plages d'adresses de documentation), et un contrôle automatique bloque une fuite à chaque modification.
+> **En bref (français) :** documentation publique et **anonymisée** d'une petite infrastructure personnelle : deux serveurs infonuagiques et un portable d'administration reliés par un **réseau privé maillé** (Tailscale, basé sur WireGuard). Le premier serveur (`node-a`) est critique : gestion à distance des appareils et supervision. Le second (`node-b`) porte toute l'automatisation : moteur de flux n8n, relais Telegram et veille croisée du premier. Le dépôt explique surtout **pourquoi** : chaque choix important est un **ADR** (architecture decision record) avec le contexte, la décision, son coût, les options rejetées et la façon de le vérifier. Aucune vraie adresse, aucun vrai nom d'hôte ni secret : tout est remplacé par des valeurs d'exemple (`node-a`, `example.com`, plages d'adresses de documentation), et un contrôle automatique bloque une fuite à chaque modification. La dernière section couvre la **sauvegarde et la reprise** : inventaire honnête (les copies sont encore sur le serveur qu'elles protègent, la copie hors site est prévue), export chiffré de n8n avec la clé gardée à part, scripts testés de rotation et de vérification, plan de retour en arrière et leçons apprises d'un vrai incident.
 
 ---
 
@@ -31,6 +31,10 @@
 | Network design and access | [docs/network/](docs/network/README.md) | Three zones (Internet, mesh, loopback), the port matrix, SSH keys only, ufw rules, Docker on loopback, checks from outside. |
 | Monitoring | [docs/monitoring/](docs/monitoring/README.md) | Availability probes, resource history, and a cross-check that alerts once per outage and says when it is over. |
 | Telegram relay | [docs/relay/](docs/relay/README.md) | Long polling out, two filters, one loopback webhook; hardened systemd unit explained line by line; unit tests in CI. |
+| Backup and recovery | [docs/backup/](docs/backup/README.md) | What is backed up and what is not, encrypted n8n export, checksums, a restore test that records only real results. |
+| Rollback plan | [docs/rollback.md](docs/rollback.md) | The way back is written before the change; undo steps per type of change. |
+| Lessons learned | [docs/lessons-learned.md](docs/lessons-learned.md) | A blameless review of a real compromise and four smaller lessons, each linked to what it changed. |
+| Keys apart from backups | [ADR 0008](docs/adr/0008-keep-backups-and-keys-apart.md) | Backups leave the node they protect; the encryption key never travels with them. |
 | Pull, do not expose | [ADR 0007](docs/adr/0007-pull-bot-commands-by-long-polling.md) | The bot fetches its messages, so the workflow engine is never reachable from the Internet. |
 | Watch from another node | [ADR 0006](docs/adr/0006-watch-each-node-from-another-node.md) | A machine cannot report its own death, so node-b watches node-a. |
 | Administration over a mesh VPN | [ADR 0002](docs/adr/0002-administration-only-over-mesh-vpn.md) | SSH, dashboards and editors are reached through the mesh or an SSH tunnel, not through the public address. |
@@ -62,17 +66,21 @@ homelab-infrastructure/
 │   ├── ssh/                     sshd hardening drop-in, admin-ws client config
 │   ├── docker/                  n8n Compose file published on loopback
 │   ├── monitoring/              cross-check configuration and cron schedule
-│   └── systemd/                 hardened relay unit and its settings example
+│   ├── systemd/                 hardened relay unit and its settings example
+│   └── backup/                  n8n backup service and daily timer
 ├── docs/
 │   ├── architecture.md          roles, services, traffic flows
 │   ├── anonymization.md         placeholders and the safety check
+│   ├── rollback.md              before a change, undo steps per change type
+│   ├── lessons-learned.md       what went wrong and what it changed
 │   ├── network/                 zones, mesh VPN, SSH, firewall, Docker, checks
 │   ├── monitoring/              Uptime Kuma, Beszel, cross-check of node-a
 │   ├── relay/                   Telegram relay guide, systemd unit line by line
+│   ├── backup/                  inventory, n8n backup and restore, restore test
 │   └── adr/                     architecture decision records
 │       ├── README.md            index and how to write one
 │       ├── 0000-template.md
-│       └── 0001 ... 0007
+│       └── 0001 ... 0008
 ├── relay/
 │   └── telegram_relay.py        long polling relay, standard library only
 ├── scripts/
@@ -82,9 +90,11 @@ homelab-infrastructure/
 │   ├── cross-check.sh           watches another node, one alert per outage
 │   ├── kuma-status.sh           one line per Uptime Kuma probe
 │   ├── install-telegram-relay.sh checks, then installs the relay (--dry-run)
+│   ├── backup-rotate.sh         dated archive with checksum, keeps the newest N
+│   ├── verify-backup.sh         checksum, safe paths, extraction in a scratch folder
 │   └── hooks/pre-commit         same check before every local commit
 ├── tests/
-│   ├── run-tests.sh             offline tests of the shell scripts
+│   ├── run-tests.sh             offline tests of the shell scripts, backup included
 │   ├── test_telegram_relay.py   relay tests with a fake Bot API and webhook
 │   └── fixtures/                saved ss and Uptime Kuma output
 ├── CHANGELOG.md
@@ -102,7 +112,7 @@ The repository is written in stages. Each stage documents what already runs, wit
 | Network and access | Mesh VPN setup, SSH keys and `sshd_config`, host firewall rules, Docker on loopback, verification from outside, ADR 0005 | Done |
 | Monitoring | Availability probes, resource history, the cross-check script rewritten with placeholders, ADR 0006 | Done |
 | Telegram relay | Relay code with every value in environment variables, the hardened systemd unit explained line by line, tests, ADR 0007 | Done |
-| Backup and recovery | What is backed up, restore test, rollback plan, lessons learned | Planned |
+| Backup and recovery | Inventory, n8n backup and restore, backup and verify scripts with tests, restore test procedure, rollback plan, lessons learned, ADR 0008 | Done; off-site copy and first restore test pending |
 
 ## Scope and honesty
 

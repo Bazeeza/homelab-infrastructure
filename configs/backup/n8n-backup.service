@@ -1,0 +1,41 @@
+# /etc/systemd/system/n8n-backup.service on node-b (placeholders only)
+#
+# Daily backup of the n8n workflows and credentials, started by n8n-backup.timer.
+# Explained in docs/backup/n8n.md. Rollback: docs/backup/n8n.md#rollback.
+#
+# What is in the archive: the workflows, and the credentials STILL ENCRYPTED
+# (no --decrypted). What is NOT in it: the encryption key. It is kept apart,
+# off the server (ADR 0008), so a copied archive alone opens nothing.
+
+[Unit]
+Description=Daily backup of n8n workflows and encrypted credentials
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+# Every file this job creates is readable by root only
+UMask=0077
+
+# 1. Start from an empty export folder, inside the container and on the host,
+#    so a workflow deleted in n8n does not live on in the next archive.
+ExecStartPre=/usr/bin/docker exec -u node <N8N_CONTAINER> rm -rf /home/node/.n8n/backup-export
+ExecStartPre=/bin/rm -rf /var/backups/n8n-staging
+
+# 2. Export with the n8n command line. --backup = --all --pretty --separate:
+#    one JSON file per workflow and per credential, easy to compare.
+ExecStartPre=/usr/bin/docker exec -u node <N8N_CONTAINER> n8n export:workflow --backup --output=/home/node/.n8n/backup-export/workflows/
+ExecStartPre=/usr/bin/docker exec -u node <N8N_CONTAINER> n8n export:credentials --backup --output=/home/node/.n8n/backup-export/credentials/
+
+# 3. Copy the export out of the container, archive it, keep the newest 7
+ExecStartPre=/usr/bin/docker cp <N8N_CONTAINER>:/home/node/.n8n/backup-export /var/backups/n8n-staging
+ExecStart=/usr/local/sbin/backup-rotate.sh --source /var/backups/n8n-staging --dest /var/backups/n8n --name n8n --keep 7
+
+# 4. Prove the new archive reads back; if not, the unit ends "failed" and
+#    shows in `systemctl --failed` instead of failing silently.
+ExecStartPost=/usr/local/sbin/verify-backup.sh --latest /var/backups/n8n --max-age-hours 1
+ExecStartPost=/bin/rm -rf /var/backups/n8n-staging
+
+# Low priority: never slow the bot down for a backup
+Nice=10
+IOSchedulingClass=idle
