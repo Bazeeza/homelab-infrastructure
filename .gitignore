@@ -30,6 +30,8 @@ id_ed25519*
 *.bak
 *.avant
 exports/
+*.tar.gz
+*.tar.gz.sha256
 
 # Python bytecode left by the relay tests
 __pycache__/
