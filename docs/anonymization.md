@@ -19,6 +19,7 @@ This repository describes a real, running infrastructure. It is public, so every
 | Telegram user ID and bot token | `<TELEGRAM_USER_ID>`, `<TELEGRAM_BOT_TOKEN>` | The ID is the only filter between the bot and strangers; the token *is* the bot. |
 | Path of the n8n webhook called by the relay, name of the n8n container | `<WEBHOOK_PATH>`, `<N8N_CONTAINER>` | The webhook path is the only thing a local process needs to trigger the workflow. |
 | Tunnel ID, API keys, encryption keys | `<TUNNEL_ID>`, `<API_KEY>`, `<N8N_ENCRYPTION_KEY>` | Credentials. |
+| Backup archive names and the off-site disk | `<TIMESTAMP>`, `<OFFSITE_DISK>`, `/var/backups/<service>` | Backup locations off the servers are never published (see below). |
 | Hosting providers | "provider 1", "provider 2" | Not needed to understand the design; named only where a provider feature matters. |
 
 ## Never published, even anonymized

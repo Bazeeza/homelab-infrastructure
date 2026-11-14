@@ -38,7 +38,7 @@ Both servers run Ubuntu, keep their clock in **UTC**, and use systemd timers or 
 > [!NOTE]
 > Docker publishes container ports with its own iptables rules, **before** ufw sees the packet. A container published as `-p 5678:5678` would be reachable from the Internet even with ufw set to deny. That is why n8n is published as `-p 127.0.0.1:5678:5678`, and why every new container follows the same rule. Details in [Docker on loopback](network/docker-loopback.md) and [ADR 0005](adr/0005-publish-container-ports-on-loopback.md).
 
-The zones, the port matrix and the SSH and firewall settings are in [Network design and access](network/README.md). Who watches what, and how an outage reaches the administrator, is in [Monitoring](monitoring/README.md).
+The zones, the port matrix and the SSH and firewall settings are in [Network design and access](network/README.md). Who watches what, and how an outage reaches the administrator, is in [Monitoring](monitoring/README.md). What is backed up on each node, and how a change or a loss is undone, is in [Backup and recovery](backup/README.md) and the [rollback plan](rollback.md).
 
 ## How traffic flows
 
