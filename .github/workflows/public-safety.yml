@@ -14,7 +14,7 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # Generic rules always run. Real hostnames and domains to hide are kept
       # in the PUBLIC_SAFETY_PATTERNS repository secret (one regex per line),
@@ -27,7 +27,7 @@ jobs:
   shellcheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # ShellCheck is preinstalled on GitHub-hosted Ubuntu runners
       - name: ShellCheck every shell script
@@ -39,7 +39,7 @@ jobs:
   script-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # Offline tests: saved ss and Uptime Kuma output, the firewall plan mode,
       # the cross-check in dry-run mode against 127.0.0.1, and the relay
@@ -55,7 +55,7 @@ jobs:
         # 3.10 and 3.12: the python3 of Ubuntu 22.04 and 24.04 LTS
         python-version: ["3.10", "3.12"]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v6
         with:
