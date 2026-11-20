@@ -15,7 +15,7 @@ jobs:
   markdownlint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # Rules are listed in .markdownlint-cli2.jsonc
       - name: Lint Markdown
@@ -26,7 +26,7 @@ jobs:
   links:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # --offline: only links between files of the repository are checked,
       # so an external site being slow cannot make the build fail
