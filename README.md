@@ -57,9 +57,11 @@
 
 ```text
 homelab-infrastructure/
-├── .github/workflows/
-│   ├── public-safety.yml        scan for real values, ShellCheck, script and relay tests
-│   └── markdown.yml             markdownlint + offline link check
+├── .github/
+│   ├── dependabot.yml           weekly pull request when a GitHub Action has a new version
+│   └── workflows/
+│       ├── public-safety.yml    scan for real values, ShellCheck, script and relay tests
+│       └── markdown.yml         markdownlint + offline link check
 ├── assets/
 │   └── architecture.svg         diagram above
 ├── configs/                     example configuration, placeholders only

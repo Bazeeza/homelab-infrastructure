@@ -32,6 +32,7 @@ All notable changes to this documentation are listed here. Format based on [Keep
 - n8n backup and restore guide, restore test procedure with an empty results table.
 - Rollback plan ([docs/rollback.md](docs/rollback.md)) and lessons learned ([docs/lessons-learned.md](docs/lessons-learned.md)).
 - ADR 0008: keep backups off the node they protect, and the keys apart from the backups.
+- Dependabot configuration: a weekly pull request when a GitHub Action used by the workflows has a new version.
 
 ### Changed
 
